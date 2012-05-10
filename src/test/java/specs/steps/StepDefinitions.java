@@ -1,20 +1,19 @@
 package specs.steps;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-
-import java.net.URI;
-
+import static org.hamcrest.Matchers.*;
 
 import org.springframework.web.client.RestTemplate;
+
+import com.infosysengr.pokerplayer.Table;
 
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
-import cucumber.runtime.PendingException;
 
 public class StepDefinitions {
 	String _nick;
+	Table table;
 	
 	@Given("^my nick is \"([^\"]*)\"$")
 	public void my_nick_is(String nick) {
@@ -47,24 +46,27 @@ public class StepDefinitions {
 	@When("^I sit down at a table$")
 	public void I_sit_down_at_a_table() {
 		RestTemplate template = new RestTemplate();
+//		List<HttpMessageConverter<?>> messageConverters = new ArrayList<HttpMessageConverter<?>>();
+//		messageConverters.add(new MappingJacksonHttpMessageConverter());
+//		template.setMessageConverters(messageConverters);
+		
 		String uriBase = "http://dojo.v.wc1.atti.com/";
 		String sitAtTable = "/tables?nick={nick}";
 		String uri = uriBase + sitAtTable;
 	
-		URI location = template.postForLocation(uri, null, _nick);
-		
+		table = template.postForObject(uri, null, Table.class, _nick);
 	}
-
+	
 	@Then("^I am sitting at that table$")
 	public void I_am_sitting_at_that_table() {
 		String expectedNick = _nick;
 		RestTemplate template = new RestTemplate();
 		String uriBase = "http://dojo.v.wc1.atti.com/";
-		String fetchPlayer = "players/{nick}" ;
-		String uri = uriBase + fetchPlayer;
+		String fetchTable = "tables/{table_id}" ;
+		String uri = uriBase + fetchTable;
 
-		String result = template.getForObject(uri, String.class, expectedNick);
+		String result = template.getForObject(uri, String.class, table.getTableId());
 		
-		assertThat(result, containsString(expectedNick));
+		assertThat(result, is("\"NoGame\""));
 	}
 }
